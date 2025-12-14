@@ -83,8 +83,22 @@ public partial class Installer : Window
     }
     private async void ButtonInstall_Click(object sender, RoutedEventArgs e)
     {
-        this.ButtonInstall.IsEnabled = false;
-        List<string> finalUnzipPaths = new();
+        this.CheckBoxDownloadGame.IsEnabled=false;
+        this.CheckBoxSavefileDelete.IsEnabled=false;
+        this.ButtonInstall.IsEnabled=false;
+        this.ButtonBrowsePath.IsEnabled=false;
+        this.TextBoxGamePath.IsEnabled=false;
+        List<string> finalUnzipPaths=new();
+        var readyChecks = new Func<bool>[]
+        {
+            () => !String.IsNullOrEmpty(Installer.GamePath),
+        };
+        bool ready = readyChecks.All(x => x());
+        if(!ready)
+        {
+            MessageBox.Show("Game path is invalid!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+            goto CancelInstallation;
+        }
         if((bool)this.CheckBoxDownloadGame.IsChecked)
         {
             try
@@ -97,16 +111,6 @@ public partial class Installer : Window
                 MessageBox.Show("Failed to download the game from multiple mirrors!\n\nTry again and consider acquiring the game manually if this fails multiple times.", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 goto CancelInstallation;
             }
-        }
-        var readyChecks = new Func<bool>[]
-        {
-            () => !String.IsNullOrEmpty(Installer.GamePath),
-        };
-        bool ready = readyChecks.All(x => x());
-        if(!ready)
-        {
-            MessageBox.Show("Game path is invalid!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
-            goto CancelInstallation;
         }
         if(FileOperations.CheckForMod(Installer.GameFolderPath))
         {
@@ -162,8 +166,12 @@ public partial class Installer : Window
         Environment.Exit(0);
     CancelInstallation:
         {
-            this.ButtonInstall.IsEnabled = true;
-            this.ButtonInstall.Content = "Install";
+            this.CheckBoxDownloadGame.IsEnabled=true;
+            this.CheckBoxSavefileDelete.IsEnabled=true;
+            this.ButtonInstall.IsEnabled=true;
+            this.ButtonBrowsePath.IsEnabled=true;
+            this.TextBoxGamePath.IsEnabled=true;
+            this.ButtonInstall.Content="Install";
             FileOperations.DeleteTempFiles();
             return;
         }
