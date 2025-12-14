@@ -9,9 +9,11 @@ namespace ScavKRInstaller
 {
     public static class FileOperations
     {
+        private const string GameName = "CasualtiesUnknown.exe";
+
         public static bool HandleProvidedGamePath(ref string path)
         {
-            string gameName = "CasualtiesUnknown.exe";
+            string gameName = GameName;
             FileAttributes attributes = File.GetAttributes(path);
             if((attributes & FileAttributes.Directory) == FileAttributes.Directory)
             {
@@ -76,6 +78,10 @@ namespace ScavKRInstaller
             Directory.CreateDirectory(tempFolder);
             return tempFolder;
         }
+        private static string GetZipFilename(string url)
+        {
+            return url.Substring(url.LastIndexOf('/') + 1, url.LastIndexOf(".zip") + 3 - url.LastIndexOf('/'));
+        }
         public static bool CheckForBepin(string gameFolder)
         {
             return Directory.Exists(gameFolder+"\\BepInEx");
@@ -84,11 +90,27 @@ namespace ScavKRInstaller
         {
             return File.Exists(gameFolder+"\\BepInEx\\plugins\\KrokoshaCasualtiesMP.dll");
         }
-        public async static Task<string> DownloadArchive(string url)
+        public static async Task<string> TryGameDownload(string[] urls)
+        {
+            foreach(string url in urls)
+            {
+                try
+                {
+                    string result = await FileOperations.DownloadArchive(url, true);
+                    return result;
+                }
+                catch
+                {
+                    continue;
+                }
+            }
+            throw new TimeoutException("All game download mirrors failed!");
+        }
+        public async static Task<string> DownloadArchive(string url, bool silentExceptions = false)
         {
             HttpClient client = new();
             Uri uri = new(url);
-            string filename = url.Substring(url.LastIndexOf('/') + 1);
+            string filename = FileOperations.GetZipFilename(url);
             string tempFolderFilePath = GetTempFolderPath()+$"\\{filename}";
             try
             {
@@ -101,12 +123,12 @@ namespace ScavKRInstaller
             }
             catch(TaskCanceledException ex) when(ex.InnerException is TimeoutException)
             {
-                MessageBox.Show($"Connection has timed while downloading {filename}! Ensure that github.com is reachable and try again.", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                if(!silentExceptions)MessageBox.Show($"Connection has timed while downloading {filename}! Ensure that github.com is reachable and try again.", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 throw new TimeoutException();
             }
             catch(HttpRequestException ex)
             {
-                MessageBox.Show($"Could not connect to github while downloading {filename}! Ensure that github.com is reachable and try again.", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                if(!silentExceptions)MessageBox.Show($"Could not connect to github while downloading {filename}! Ensure that github.com is reachable and try again.", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 throw new TimeoutException();
             }
             throw new Exception($"Something really bad has happened while downloading {filename}!");
@@ -152,18 +174,29 @@ namespace ScavKRInstaller
             int copiedFolders = 0;
             foreach(string path in paths)
             {
-                string filename = path.Substring(path.LastIndexOf('\\'));
-                if(Installer.BepinZipArchivePath.Contains(filename))
+                string targetFolder = path.Substring(path.LastIndexOf('\\') + 1);
+                if(Installer.GameDownloadURLs[0].Contains(targetFolder))
                 {
                     CloneDirectory(path, Installer.GameFolderPath);
                     copiedFolders++;
+                    string[] dirs = Directory.GetDirectories(Installer.GameFolderPath);
+                    Installer.GameFolderPath = dirs[0];
+                    Installer.GamePath = dirs[0] + "\\"+GameName;
+                    continue;
                 }
-                if(Installer.ModZipArchivePath.Contains(filename))
+                if(Installer.BepinZipArchivePath.Contains(targetFolder))
+                {
+                    CloneDirectory(path, Installer.GameFolderPath);
+                    copiedFolders++;
+                    continue;
+                }
+                if(Installer.ModZipArchivePath.Contains(targetFolder))
                 {
                     string[] dirs = Directory.GetDirectories(path);
                     string finalModPath = dirs[0];
                     CloneDirectory(finalModPath, Installer.GameFolderPath);
                     copiedFolders++;
+                    continue;
                 }
             }
             if (copiedFolders != paths.Length)

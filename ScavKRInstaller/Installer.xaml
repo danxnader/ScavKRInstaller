@@ -33,12 +33,13 @@
             <RowDefinition Height="32"></RowDefinition>
             <RowDefinition Height="32"></RowDefinition>
         </Grid.RowDefinitions>
-        <TextBlock Style="{StaticResource MainTextBlock}" Grid.Row="0">Ensure that you're using <Hyperlink NavigateUri="https://orsonik.itch.io/scav-prototype" RequestNavigate="Hyperlink_RequestNavigate">Demo 5 Pre-Test 4</Hyperlink>!</TextBlock>
-        <TextBlock Style="{StaticResource MainTextBlock}" Grid.Row="1">Game path:</TextBlock>
+        <TextBlock Style="{StaticResource MainTextBlock}" Grid.Row="0" Margin="19,3,-19,0" VerticalAlignment="Top" Grid.RowSpan="2">Download Demo 5 Pre-test 4?</TextBlock>
+        <CheckBox x:Name="CheckBoxDownloadGame" Grid.Row="0" VerticalAlignment="Top" Margin="5,9,0,0" IsChecked="True" HorizontalAlignment="Left" Width="18" Height="18" Checked="CheckBoxDownloadGame_Checked" Click="CheckBoxDownloadGame_Click"/>
+        <TextBlock x:Name="TextBlockInstallPath" Style="{StaticResource MainTextBlock}" Grid.Row="1">Install path:</TextBlock>
         <TextBox x:Name="TextBoxGamePath" Style="{StaticResource MainTextBox}" Margin="110,0,0,0" Height="28" VerticalContentAlignment="Center" FontSize="15" Grid.Row="1" HorizontalAlignment="Left" Width="301" TextChanged="TextBoxGamePath_TextChanged"></TextBox>
         <Button x:Name="ButtonBrowsePath" Style="{StaticResource MainButton}" Grid.Row="1" Width="70" HorizontalContentAlignment="Left" Height="30" Margin="416,0,0,0" HorizontalAlignment="Left" Click="ButtonBrowsePath_Click">Browse</Button>
-        <TextBlock Style="{StaticResource MainTextBlock}" Grid.Row="2">Delete savefile? (recommended)</TextBlock>
-        <CheckBox x:Name="CheckBoxSavefileDelete"  Grid.Row="2" VerticalAlignment="Center" Margin="269,0,0,0" IsChecked="True" HorizontalAlignment="Left" Width="18" Height="18"></CheckBox>
+        <TextBlock Style="{StaticResource MainTextBlock}" Grid.Row="2" Margin="19,0,-19,0">Delete savefile? (recommended)</TextBlock>
+        <CheckBox x:Name="CheckBoxSavefileDelete"  Grid.Row="2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" HorizontalAlignment="Left" Width="18" Height="18"></CheckBox>
         <Button x:Name="ButtonInstall" Style="{StaticResource MainButton}" Grid.Row="3" Margin="5,0,5,0" IsEnabled="True" Click="ButtonInstall_Click">Install</Button>
     </Grid>
 </Window>
