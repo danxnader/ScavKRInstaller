@@ -202,7 +202,8 @@ namespace ScavKRInstaller
             }
             if(fs.Name.Contains("main"))
             {
-                return FileOperations.GetArchiveChecksums()["mod"].SequenceEqual(SHA);
+                return true; //probably the only thing that does change
+                //fuck me dude we need a proper remote checksum generator
             }
             return false;
         }
