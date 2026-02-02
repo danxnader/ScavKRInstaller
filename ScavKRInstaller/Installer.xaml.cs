@@ -32,7 +32,8 @@ public partial class Installer : Window
         {
             Installer.SaveFilePaths=saveFilePaths;
         }
-        FileOperations.DeleteTempFiles();
+        FileOperations.DeleteTempFiles(); 
+        Window.GetWindow(this).Title = $"Scav Krokosha Multiplayer Installer rev. {Constants.Version}: {Constants.GetSplash()[Random.Shared.Next(0, Constants.GetSplash().Length)]}";
     }
 
     private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
