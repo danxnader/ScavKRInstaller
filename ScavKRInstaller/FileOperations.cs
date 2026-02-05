@@ -147,7 +147,7 @@ namespace ScavKRInstaller
                 }
                 catch (Exception ex)
                 {
-                    LogHandler.Instance.Write($"Download from source {url} failed! | {ex.Message}");
+                    LogHandler.Instance.Write($"Failed to download from source {url}! | {ex.Message}");
                     continue;
                 }
             }

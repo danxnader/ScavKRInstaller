@@ -37,7 +37,7 @@
         <CheckBox x:Name="CheckBoxDownloadGame" Grid.Row="0" VerticalAlignment="Top" Margin="5,9,0,0" IsChecked="True" HorizontalAlignment="Left" Width="18" Height="18" Checked="CheckBoxDownloadGame_Checked" Click="CheckBoxDownloadGame_Click"/>
         <Button x:Name="ButtonOpenLog" Style="{StaticResource MainButton}" Grid.Row="0" Width="70" HorizontalContentAlignment="Center" Height="30" Margin="416,0,0,0" HorizontalAlignment="Left" Content="Log" Click="ButtonOpenLog_Click"></Button>
         <TextBlock x:Name="TextBlockInstallPath" Style="{StaticResource MainTextBlock}" Grid.Row="1">Install path:</TextBlock>
-        <TextBox x:Name="TextBoxGamePath" Style="{StaticResource MainTextBox}" Margin="110,0,0,0" Height="28" VerticalContentAlignment="Center" FontSize="15" Grid.Row="1" HorizontalAlignment="Left" Width="301" TextChanged="TextBoxGamePath_TextChanged"></TextBox>
+        <TextBox x:Name="TextBoxGamePath" Style="{StaticResource MainTextBox}" Margin="110,0,0,0" Height="28" VerticalContentAlignment="Center" FontSize="15" Grid.Row="1" HorizontalAlignment="Left" Width="301" TextChanged="TextBoxGamePath_TextChanged" IsReadOnly="True"></TextBox>
         <Button x:Name="ButtonBrowsePath" Style="{StaticResource MainButton}" Grid.Row="1" Width="70" HorizontalContentAlignment="Left" Height="30" Margin="416,0,0,0" HorizontalAlignment="Left" Click="ButtonBrowsePath_Click">Browse</Button>
         <TextBlock Style="{StaticResource MainTextBlock}" Grid.Row="2" Margin="19,0,-19,0">Delete savefile? (recommended)</TextBlock>
         <CheckBox x:Name="CheckBoxSavefileDelete"  Grid.Row="2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" HorizontalAlignment="Left" Width="18" Height="18"></CheckBox>
