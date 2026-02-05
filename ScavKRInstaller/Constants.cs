@@ -43,6 +43,7 @@ namespace ScavKRInstaller
                 "Ketchup Intravenously",
                 "Thanks losyrr!",
                 "Thanks GaryTheCat!",
+                "Thanks Arcarnisan!",
                 "Go play Desecrators",
                 "Go play CleanFall"
             };
