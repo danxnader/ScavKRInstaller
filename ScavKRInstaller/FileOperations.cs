@@ -13,12 +13,42 @@ namespace ScavKRInstaller
 {
     public static class FileOperations
     {
-        private const string GameName="CasualtiesUnknown.exe";
-        private const string DevName="Orsoniks";
-        private const string SavefileName="save.sv";
+        private static string GameZipFilename="";
+        private static string BepinZipFilename="";
+        private static string ModZipFilename="";
+        public static void DiscoverFilenames()
+        {
+            GameZipFilename=GetZipFilename(Constants.GameDownloadURLs);
+            BepinZipFilename=GetZipFilename(Constants.BepinZipURL);
+            ModZipFilename=GetZipFilename(Constants.ModZipURL);
+        }
+        public static string GetZipFilename(string[] urls)
+        {
+            if(urls.Length==0) throw new ArgumentException("Empty URL list provided to filename discovery!");
+            if(urls==null) throw new ArgumentNullException("Null URL list provided to filename discovery!");
+            if(urls.Length==1)
+            {
+                return GetZipFilename(urls[0]);
+            }
+            string[] result=new string[urls.Length];
+            for(int i = 0;i<urls.Length;i++)
+            {
+                result[i]=GetZipFilename(urls[i]);
+            }
+            string comparer=result[0];
+            foreach(string s in result)
+            {
+                if(!s.Equals(comparer))
+                {
+                    LogHandler.Instance.Write($"Discovered filename inconsistency in {result[0]}! This is very, very bad and should never happen!");
+                    throw new InvalidDataException("Filename inconsistency!");
+                }
+            }
+            return result[0];
+        }
         public static bool HandleProvidedGamePath(ref string path)
         {
-            string gameName=GameName;
+            string gameName=Constants.GameName;
             if (!path.All(char.IsAscii))
             {
                 LogHandler.Instance.Write($"Path contains non-latin characters.");
@@ -76,9 +106,9 @@ namespace ScavKRInstaller
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), //Although, it wouldn't hurt to check other folders too
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) //Just in case
             };
-            string devName=DevName;
-            string[] gameNames=GetGameNames(); //Before beta 4, game saved to CasualtiesUnknownDemo. We'll clean both in case it changes again.
-            string savefileName=SavefileName;
+            string devName=Constants.DevName;
+            string[] gameNames=Constants.GetGameNames(); //Before beta 4, game saved to CasualtiesUnknownDemo. We'll clean both in case it changes again.
+            string savefileName=Constants.SavefileName;
             bool result=false;
             foreach(string appdataPath in appdataPaths)
             {
@@ -106,20 +136,6 @@ namespace ScavKRInstaller
             saveFilePaths=[];
             LogHandler.Instance.Write("No savefiles found");
             return false;
-        }
-
-        private static string[] GetGameNames()
-        {
-            return new string[] { "CasualtiesUnknownDemo", "CasualtiesUnknown"};
-        }
-        private static Dictionary<string, byte[]> GetArchiveChecksums() //wanted to make this smarter where you automatically get checksum by current filename but realized it would take too much effort since i don't really separate those outside of functions and these change at runtime sooooooooo (i should (go rewrite this whole thing you fucking idiot))
-        {
-            return new Dictionary<string, byte[]>
-            {
-                { "game", [188, 68, 84, 231, 77, 176, 224, 123, 248, 183, 80, 143, 194, 185, 241, 15, 99, 69, 224, 134, 196, 62, 159, 68, 134, 250, 253, 92, 246, 180, 100, 110, ]},
-                { "bepin", [248, 129, 32, 27, 121, 218, 3, 229, 19, 191, 151, 205, 243, 150, 7, 255, 167, 249, 224, 211, 26, 81, 155, 26, 238, 202, 142, 182, 15, 131, 9, 231, ]},
-                { "mod", [167, 64, 77, 178, 185, 240, 17, 161, 171, 117, 125, 251, 238, 108, 91, 203, 227, 161, 72, 89, 11, 170, 181, 27, 15, 170, 18, 189, 111, 10, 252, 160, ]}
-            };
         }
 
         public static bool DeleteSavefiles(string[] paths)
@@ -208,7 +224,7 @@ namespace ScavKRInstaller
             {
                 File.Delete((string)ex.Data["path"]);
                 if(!silentExceptions) MessageBox.Show($"File by this path is corrupted and has been downloaded with an invalid checksum!\n\n{ex.Data}\n\nIf this error persists multiple times, contact the installer developer or consider manual installation!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
-                throw ex; //exception rethrow funny 
+                throw new InvalidDataException($"Checksum check failed on {ex.Data["path"]}! File has been deleted!", ex); //well, i really want to rethrow here but i'd rather go with 2 exceptions than a fucked up stack. this is kinda bad
             }
             catch(TaskCanceledException ex) when(ex.InnerException is TimeoutException)
             {
@@ -222,8 +238,6 @@ namespace ScavKRInstaller
                 LogHandler.Instance.Write($"!!SERVER UNREACHABLE WHILE DOWNLOADING {filename}!!");
                 throw new TimeoutException();
             }
-            LogHandler.Instance.Write($"DownloadArchive Mystery Error!");
-            throw new Exception($"Something really bad has happened while downloading {filename}!");
         }
         public static bool UnzipFiles(string[] zippedPaths, out string[] unzippedPaths)
         {
@@ -249,27 +263,29 @@ namespace ScavKRInstaller
             unzippedPaths = paths.ToArray();
             return result;
         }
-        public async static Task<bool> IsChecksumValid(FileStream fs) //yep, this sucks! refactor this whole piece of shit of a class already
+        public async static Task<bool> IsChecksumValid(FileStream fs)
         {
-            SHA256 sha = SHA256.Create();
-            fs.Seek(0, SeekOrigin.Begin);
-            string path = fs.Name;
-            string targetFolder = path.Substring(path.LastIndexOf(Path.DirectorySeparatorChar) + 1);
-            byte[] SHA = await sha.ComputeHashAsync(fs);
-            if(Installer.GameDownloadURLs[0].Contains(targetFolder))
+            using(SHA256 sha = SHA256.Create())
             {
-                return FileOperations.GetArchiveChecksums()["game"].SequenceEqual(SHA);
+                fs.Seek(0, SeekOrigin.Begin);
+                string path = fs.Name;
+                string targetFolder = path.Substring(path.LastIndexOf(Path.DirectorySeparatorChar) + 1);
+                byte[] SHA = await sha.ComputeHashAsync(fs);
+                if(path.Contains(GameZipFilename))
+                {
+                    return Constants.GetArchiveChecksums()[Constants.ArchiveType.Game].SequenceEqual(SHA);
+                }
+                if(path.Contains(BepinZipFilename))
+                {
+                    return Constants.GetArchiveChecksums()[Constants.ArchiveType.Bepin].SequenceEqual(SHA);
+                }
+                if(path.Contains(ModZipFilename))
+                {
+                    return true; //probably the only thing that does change
+                                 //fuck me dude we need a proper remote checksum generator
+                }
+                return false;
             }
-            if(fs.Name.Contains("BepIn")) //dirty hack time, fuck consistency! i should really refactor this.
-            {
-                return FileOperations.GetArchiveChecksums()["bepin"].SequenceEqual(SHA);
-            }
-            if(fs.Name.Contains("main"))
-            {
-                return true; //probably the only thing that does change
-                //fuck me dude we need a proper remote checksum generator
-            }
-            return false;
         }
         public static bool HandleCopyingFiles(string[] paths) //well, since the multiplayer mod is inside of it's own folder, i can't just generically move everything into game's directory, so they all get a special treatment.
         {
@@ -291,12 +307,12 @@ namespace ScavKRInstaller
             int copiedFolders = 0;
             foreach(string path in paths)
             {
-                string targetFolder = path.Substring(path.LastIndexOf(Path.DirectorySeparatorChar) + 1);
-                if(Installer.GameDownloadURLs[0].Contains(targetFolder))
+                string targetFolder = path.Substring(path.LastIndexOf(Path.DirectorySeparatorChar)+1);
+                if(FileOperations.GameZipFilename.Contains(targetFolder))
                 {
                     CloneDirectory(path, Installer.GameFolderPath);
                     copiedFolders++;
-                    foreach (string dir in GetGameNames())
+                    foreach (string dir in Constants.GetGameNames())
                     {
                         string result = Installer.GameFolderPath+Path.DirectorySeparatorChar+dir;
                         if(Directory.Exists(result))
@@ -305,7 +321,7 @@ namespace ScavKRInstaller
                             break;
                         }
                     }
-                    Installer.GamePath = Installer.GameFolderPath+Path.DirectorySeparatorChar+GameName;
+                    Installer.GamePath = Installer.GameFolderPath+Path.DirectorySeparatorChar+Constants.GameName;
                     continue;
                 }
                 if(Installer.BepinZipArchivePath.Contains(targetFolder))

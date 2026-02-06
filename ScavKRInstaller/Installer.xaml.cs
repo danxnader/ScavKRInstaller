@@ -17,21 +17,14 @@ public partial class Installer : Window
     public static string[] SaveFilePaths = [];
     public static string ModZipArchivePath = "";
     public static string BepinZipArchivePath = "";
-    public static readonly string ModZipURL = @"https://github.com/Krokosha666/cas-unk-krokosha-multiplayer-coop/archive/refs/heads/main.zip";
-    public static readonly string BepinZipURL = @"https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.4/BepInEx_win_x64_5.4.23.4.zip";
-    public static readonly string[] GameDownloadURLs =
-        {
-            @"https://www.dropbox.com/scl/fi/l1u836ltcxywkbx0wixyg/ScavDemoV5PreTesting4.zip?rlkey=fauga6kxpa67w7lo26d7o6tip&e=1&st=z4imhpug&dl=1",
-            @"https://ambatukam.xyz/ScavDemoV5PreTesting4.zip",
-            @"https://yoink.cat-bot.de/static/ScavDemoV5PreTesting4.zip",
-        };
-    public static bool InDownloadMode;
-    private string providedPath;
+    private string providedPath = "";
+    public static bool InDownloadMode = true;
     private Log logWindow = null;
 
     public Installer()
     {
         InitializeComponent();
+        FileOperations.DiscoverFilenames();
         string[] saveFilePaths;
         if(FileOperations.CheckIfSaveFilesPresent(out saveFilePaths))
         {
@@ -112,7 +105,7 @@ public partial class Installer : Window
             try
             {
                 this.SetStatus("Downloading the game, please wait!");
-                finalUnzipPaths.Add(await FileOperations.TryGameDownload(Installer.GameDownloadURLs));
+                finalUnzipPaths.Add(await FileOperations.TryGameDownload(Constants.GameDownloadURLs));
             }
             catch(TimeoutException ex)
             {
@@ -140,7 +133,7 @@ public partial class Installer : Window
             this.SetStatus("Downloading BepinEX...");
             try
             {
-                Installer.BepinZipArchivePath=await FileOperations.DownloadArchive(Installer.BepinZipURL);
+                Installer.BepinZipArchivePath=await FileOperations.DownloadArchive(Constants.BepinZipURL);
             }
             catch(Exception ex)
             {
@@ -152,7 +145,7 @@ public partial class Installer : Window
         this.SetStatus("Downloading multiplayer mod...");
         try
         {
-            Installer.ModZipArchivePath=await FileOperations.DownloadArchive(Installer.ModZipURL);
+            Installer.ModZipArchivePath=await FileOperations.DownloadArchive(Constants.ModZipURL);
         }
         catch(Exception ex)
         {
