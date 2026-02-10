@@ -4,7 +4,7 @@ Simple windows installer of a [Co-op multiplayer mod](https://github.com/Krokosh
 
 Downloads and unpacks BepInEx and the latest version of the mod into the game's folder.
 
-Optionally downloads and installs the correct game version.
+Optionally downloads and installs the correct game version, as well as [ChangeSkin](https://github.com/05126619z/ChangeSkin) mod.
 
 If the mod is already installed, updates it with the latest version.
 
