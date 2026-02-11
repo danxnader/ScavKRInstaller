@@ -15,7 +15,7 @@ namespace ScavKRInstaller
         public static readonly string SavefileName = "save.sv";
         public static readonly string ModZipURL = @"https://github.com/Krokosha666/cas-unk-krokosha-multiplayer-coop/archive/refs/heads/main.zip";
         public static readonly string BepinZipURL = @"https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.4/BepInEx_win_x64_5.4.23.4.zip";
-        public static readonly string ChangeSkinURL = @"https://github.com/05126619z/ChangeSkin/releases/download/v2.0.0.gv5.4_mp/ChangeSkin-x64.zip";
+        public static readonly string ChangeSkinURL = @"https://github.com/05126619z/ChangeSkin/releases/releases/latest/ChangeSkin-x64.zip";
         public static readonly string[] GameDownloadURLs =
             {
             @"https://www.dropbox.com/scl/fi/l1u836ltcxywkbx0wixyg/ScavDemoV5PreTesting4.zip?rlkey=fauga6kxpa67w7lo26d7o6tip&e=1&st=z4imhpug&dl=1",
