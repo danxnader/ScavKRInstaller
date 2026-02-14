@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace ScavKRInstaller
 {
     public static class Constants
     {
-        public static readonly string Version = "1.1.10";
+        public static readonly string Version = "1.1.11";
         public static readonly string GameName = "CasualtiesUnknown.exe";
         public static readonly string DevName = "Orsoniks";
         public static readonly string SavefileName = "save.sv";
@@ -40,6 +42,18 @@ namespace ScavKRInstaller
             Game,
             Bepin,
             Mod
+        }
+        public static string FallbackVersionFilePath
+        {
+            get
+            {
+                string path = String.Join(Path.DirectorySeparatorChar.ToString(), Directory.GetCurrentDirectory(), "sources.json");
+                if(File.Exists(path))
+                {
+                    return path;
+                }
+                return null;
+            }
         }
         public static string[] GetSplash()  
         {

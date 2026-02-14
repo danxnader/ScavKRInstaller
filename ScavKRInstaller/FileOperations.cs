@@ -13,13 +13,14 @@ namespace ScavKRInstaller
 {
     public static class FileOperations
     {
-        private static string GameZipFilename="";
+        private static string GameArchiveFilename="";
         private static string BepinZipFilename="";
         private static string ModZipFilename="";
         private static string ChangeSkinFilename="";
+        public static string SelectedSetupVersion="";
         public static void DiscoverFilenames()
         {
-            GameZipFilename=GetZipFilename(Constants.GameDownloadURLs);
+            GameArchiveFilename=GetZipFilename(Constants.GameDownloadURLs);
             BepinZipFilename=GetZipFilename(Constants.BepinZipURL);
             ModZipFilename=GetZipFilename(Constants.ModZipURL);
             ChangeSkinFilename=GetZipFilename(Constants.ChangeSkinURL);
@@ -278,7 +279,7 @@ namespace ScavKRInstaller
                 string path = fs.Name;
                 string targetFolder = path.Substring(path.LastIndexOf(Path.DirectorySeparatorChar) + 1);
                 byte[] SHA = await sha.ComputeHashAsync(fs);
-                if(path.Contains(GameZipFilename))
+                if(path.Contains(GameArchiveFilename))
                 {
                     return Constants.GetArchiveChecksums()[Constants.ArchiveType.Game].SequenceEqual(SHA);
                 }
@@ -315,7 +316,7 @@ namespace ScavKRInstaller
             foreach(string path in paths)
             {
                 string targetFolder = path.Substring(path.LastIndexOf(Path.DirectorySeparatorChar)+1);
-                if(FileOperations.GameZipFilename.Contains(targetFolder))
+                if(FileOperations.GameArchiveFilename.Contains(targetFolder))
                 {
                     CloneDirectory(path, Installer.GameFolderPath);
                     copiedFolders++;
@@ -331,13 +332,13 @@ namespace ScavKRInstaller
                     Installer.GamePath = Installer.GameFolderPath+Path.DirectorySeparatorChar+Constants.GameName;
                     continue;
                 }
-                if(Installer.BepinZipArchivePath.Contains(targetFolder))
+                if(Installer.BepinArchivePath.Contains(targetFolder))
                 {
                     CloneDirectory(path, Installer.GameFolderPath);
                     copiedFolders++;
                     continue;
                 }
-                if(Installer.ModZipArchivePath.Contains(targetFolder))
+                if(Installer.ModArchivePath.Contains(targetFolder))
                 {
                     string[] dirs = Directory.GetDirectories(path);
                     string finalModPath = dirs[0];

@@ -15,8 +15,8 @@ public partial class Installer : Window
     public static string GamePath = "";
     public static string GameFolderPath = "";
     public static string[] SaveFilePaths = [];
-    public static string ModZipArchivePath = "";
-    public static string BepinZipArchivePath = "";
+    public static string ModArchivePath = "";
+    public static string BepinArchivePath = "";
     public static string ChangeSkinArchivePath = "";
     private string providedPath = "";
     public static bool InDownloadMode = true;
@@ -148,7 +148,7 @@ public partial class Installer : Window
             this.SetStatus("Downloading BepinEX...");
             try
             {
-                Installer.BepinZipArchivePath=await FileOperations.DownloadArchive(Constants.BepinZipURL);
+                Installer.BepinArchivePath=await FileOperations.DownloadArchive(Constants.BepinZipURL);
             }
             catch(Exception ex)
             {
@@ -160,7 +160,7 @@ public partial class Installer : Window
         this.SetStatus("Downloading multiplayer mod...");
         try
         {
-            Installer.ModZipArchivePath=await FileOperations.DownloadArchive(Constants.ModZipURL);
+            Installer.ModArchivePath=await FileOperations.DownloadArchive(Constants.ModZipURL);
         }
         catch(Exception ex)
         {
@@ -168,15 +168,15 @@ public partial class Installer : Window
             LogHandler.Instance.Write($"CANCEL: Mod fail: {ex.ToString()}");
             goto CancelInstallation;
         }
-        if(!String.IsNullOrEmpty(Installer.BepinZipArchivePath))
+        if(!String.IsNullOrEmpty(Installer.BepinArchivePath))
         {
-            finalUnzipPaths.Add(Installer.BepinZipArchivePath);
+            finalUnzipPaths.Add(Installer.BepinArchivePath);
         }
         if(!String.IsNullOrEmpty(Installer.ChangeSkinArchivePath))
         {
             finalUnzipPaths.Add(Installer.ChangeSkinArchivePath);
         }
-        finalUnzipPaths.Add(Installer.ModZipArchivePath);
+        finalUnzipPaths.Add(Installer.ModArchivePath);
         this.SetStatus("Extracting archives...");
         string[] unpackedDirs = [];
         try
@@ -221,8 +221,8 @@ public partial class Installer : Window
     {
         Installer.GameFolderPath="";
         Installer.GamePath="";
-        Installer.BepinZipArchivePath="";
-        Installer.ModZipArchivePath="";
+        Installer.BepinArchivePath="";
+        Installer.ModArchivePath="";
     }
     private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
     {
@@ -251,8 +251,10 @@ public partial class Installer : Window
         Installer.InDownloadMode = CheckBoxDownloadGame.IsChecked.Value;
     }
 
-    private void ButtonOpenLog_Click(object sender, RoutedEventArgs e)
+    private async void ButtonOpenLog_Click(object sender, RoutedEventArgs e)
     {
+        await VersionManager.Init(null);
+        LogHandler.Instance.Write(VersionManager.Instance.Versions["Latest"].Extras["ChangeSkin"].URLs[0]);
         if(this.logWindow==null)
         {
             this.logWindow=new Log(LogHandler.Instance);
