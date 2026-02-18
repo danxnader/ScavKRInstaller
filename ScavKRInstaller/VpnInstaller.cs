@@ -1,68 +1,22 @@
-using System.Diagnostics;
 using System.IO;
-using System.Net.Http;
 
 namespace ScavKRInstaller;
 
 public static class VpnInstaller
 {
-    private const string OpenVpnMsiUrl = "https://swupdate.openvpn.org/community/releases/OpenVPN-2.6.15-I001-amd64.msi";
     private const string VpnServerAddress = "26.35.34.177";
     private const string VpnSharedPassword = "123";
 
-    public static async Task<string> TryInstallOpenSourceVpnAsync()
+    public static Task<string> TryInstallOpenSourceVpnAsync()
     {
-        try
+        string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+        string openVpnExe = Path.Combine(programFiles, "OpenVPN", "bin", "openvpn.exe");
+        if (File.Exists(openVpnExe))
         {
-            string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-            string openVpnExe = Path.Combine(programFiles, "OpenVPN", "bin", "openvpn.exe");
-            if (File.Exists(openVpnExe))
-            {
-                return "OpenVPN Community is already installed.";
-            }
-
-            string workDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "ScavKRInstaller");
-            Directory.CreateDirectory(workDir);
-            string msiPath = Path.Combine(workDir, "OpenVPN-2.6.15-I001-amd64.msi");
-
-            using (HttpClient client = new())
-            using (HttpResponseMessage response = await client.GetAsync(OpenVpnMsiUrl, HttpCompletionOption.ResponseHeadersRead))
-            {
-                response.EnsureSuccessStatusCode();
-                await using Stream download = await response.Content.ReadAsStreamAsync();
-                await using FileStream fs = new(msiPath, FileMode.Create, FileAccess.Write, FileShare.None);
-                await download.CopyToAsync(fs);
-            }
-
-            ProcessStartInfo psi = new(
-                "msiexec.exe",
-                $"/i \"{msiPath}\" /qn /norestart"
-            )
-            {
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using Process? p = Process.Start(psi);
-            if (p == null)
-            {
-                return "Failed to start OpenVPN installer process.";
-            }
-
-            await p.WaitForExitAsync();
-            if (p.ExitCode == 0 || p.ExitCode == 3010)
-            {
-                return p.ExitCode == 0
-                    ? "OpenVPN Community installed successfully."
-                    : "OpenVPN Community installed successfully (reboot required by installer).";
-            }
-
-            return $"OpenVPN installer exited with code {p.ExitCode}.";
+            return Task.FromResult("OpenVPN already detected. No-admin mode: keeping existing installation.");
         }
-        catch (Exception ex)
-        {
-            return $"OpenVPN install failed: {ex.Message}";
-        }
+
+        return Task.FromResult("No-admin mode active: skipped VPN system installation. Game install continues without admin rights.");
     }
 
     public static string WriteGuestVpnInfoFile(string gameFolderPath)
@@ -78,7 +32,7 @@ public static class VpnInstaller
             string info =
                 "VPN QUICK INFO (guest)\r\n" +
                 "======================\r\n" +
-                "Client VPN: OpenVPN Community (installed by this installer)\r\n" +
+                "Client VPN: use an already installed VPN client (no-admin installer mode)\r\n" +
                 $"VPN server/address: {VpnServerAddress}\r\n" +
                 $"Shared password: {VpnSharedPassword}\r\n\r\n" +
                 "Note: OpenVPN does not auto-connect with only IP/password.\r\n" +

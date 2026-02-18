@@ -30,9 +30,9 @@ Ce projet est un fork de [danxnader/ScavKRInstaller](https://github.com/danxnade
 - Au lancement du jeu, demande Host/Guest a chaque fois:
   - Host: nom force a `furry`, detection IP locale (priorite aux IP `26.x.x.x`), copie auto dans le presse-papiers et popup d'information.
   - Guest: demande l'IP du serveur dans une popup, ajoute le port `7790` si non fourni.
-- Integration OpenVPN Community:
-  - tentative de lancement OpenVPN en meme temps que le jeu
-  - fermeture OpenVPN a la fermeture du jeu
+- Mode sans admin:
+  - aucune installation systeme VPN (pas de MSI, pas d'elevation UAC)
+  - tentative de lancement OpenVPN seulement s'il est deja installe
   - generation de `VPN_GUEST_INFO.txt`, `vpn\credentials.txt`, `vpn\guest.ovpn.template`
 - Robustesse amelioree:
   - fermeture des process jeu en cours avant mise a jour des fichiers
@@ -41,7 +41,7 @@ Ce projet est un fork de [danxnader/ScavKRInstaller](https://github.com/danxnade
 
 ### Notes
 
-- L'installation OpenVPN peut necessiter les droits administrateur Windows.
+- Cette version est concue pour fonctionner sans droits administrateur.
 - Si un host/guest ne demarre pas, verifier `Launch_AutoConnect.log` dans le dossier du jeu.
 
 ## English
@@ -74,9 +74,9 @@ This project is a fork of [danxnader/ScavKRInstaller](https://github.com/danxnad
 - Host/Guest prompt on every game launch:
   - Host: forced name `furry`, local IP detection (prefers `26.x.x.x`), automatic clipboard copy, and info popup.
   - Guest: popup asks for server IP, adds port `7790` if not provided.
-- OpenVPN Community integration:
-  - tries to start OpenVPN together with the game
-  - stops OpenVPN when the game exits
+- No-admin mode:
+  - no system VPN installation (no MSI, no UAC elevation)
+  - tries to launch OpenVPN only if it already exists on the machine
   - generates `VPN_GUEST_INFO.txt`, `vpn\credentials.txt`, `vpn\guest.ovpn.template`
 - Improved reliability:
   - closes running game processes before updating files
@@ -85,5 +85,5 @@ This project is a fork of [danxnader/ScavKRInstaller](https://github.com/danxnad
 
 ### Notes
 
-- OpenVPN installation may require Windows admin privileges.
+- This build is designed to run without administrator privileges.
 - If host/guest startup fails, check `Launch_AutoConnect.log` in the game folder.
