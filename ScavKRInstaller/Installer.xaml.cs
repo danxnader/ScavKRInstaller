@@ -20,6 +20,7 @@ public partial class Installer : Window
     public static string ChangeSkinArchivePath = "";
     private string providedPath = "";
     public static bool InDownloadMode = true;
+    public static bool HeadlessMode = false;
     private Log logWindow = null;
 
     public Installer()

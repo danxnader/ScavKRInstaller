@@ -161,7 +161,7 @@ namespace ScavKRInstaller
         }
         private static string GetTempFolderPath()
         {
-            string tempFolder = Path.GetTempPath()+"ScavKRInstaller";
+            string tempFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "ScavKRInstaller");
             Directory.CreateDirectory(tempFolder);
             return tempFolder;
         }
@@ -230,18 +230,18 @@ namespace ScavKRInstaller
             catch(InvalidDataException ex)
             {
                 File.Delete((string)ex.Data["path"]);
-                if(!silentExceptions) MessageBox.Show($"File by this path is corrupted and has been downloaded with an invalid checksum!\n\n{ex.Data["path"]}\n\nIf this error persists multiple times, contact the installer developer or consider manual installation!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                if(!silentExceptions && !Installer.HeadlessMode) MessageBox.Show($"File by this path is corrupted and has been downloaded with an invalid checksum!\n\n{ex.Data["path"]}\n\nIf this error persists multiple times, contact the installer developer or consider manual installation!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 throw new InvalidDataException($"Checksum check failed on {ex.Data["path"]}! File has been deleted!", ex); //well, i really want to rethrow here but i'd rather go with 2 exceptions than a fucked up stack. this is kinda bad
             }
             catch(TaskCanceledException ex) when(ex.InnerException is TimeoutException)
             {
-                if(!silentExceptions) MessageBox.Show($"Connection has timed while downloading {filename}! Ensure that github.com is reachable and try again.", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                if(!silentExceptions && !Installer.HeadlessMode) MessageBox.Show($"Connection has timed while downloading {filename}! Ensure that github.com is reachable and try again.", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 LogHandler.Instance.Write($"!!TIMEOUT WHILE DOWNLOADING {filename}!!");
                 throw new TimeoutException();
             }
             catch(HttpRequestException ex)
             {
-                if(!silentExceptions) MessageBox.Show($"Could not connect to github while downloading {filename}! Ensure that github.com is reachable and try again.", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                if(!silentExceptions && !Installer.HeadlessMode) MessageBox.Show($"Could not connect to github while downloading {filename}! Ensure that github.com is reachable and try again.", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 LogHandler.Instance.Write($"!!SERVER UNREACHABLE WHILE DOWNLOADING {filename}!!");
                 throw new TimeoutException();
             }
@@ -296,6 +296,30 @@ namespace ScavKRInstaller
         }
         public static bool HandleCopyingFiles(string[] paths) //well, since the multiplayer mod is inside of it's own folder, i can't just generically move everything into game's directory, so they all get a special treatment.
         {
+            static bool CopyFileWithRetry(string sourceFile, string destinationFile, int attempts = 10, int delayMs = 500)
+            {
+                for (int i = 1; i <= attempts; i++)
+                {
+                    try
+                    {
+                        File.Copy(sourceFile, destinationFile, true);
+                        return true;
+                    }
+                    catch (IOException ex) when (i < attempts)
+                    {
+                        LogHandler.Instance.Write($"WARN: Copy locked ({i}/{attempts}) on {destinationFile} | {ex.Message}");
+                        Thread.Sleep(delayMs);
+                    }
+                    catch (UnauthorizedAccessException ex) when (i < attempts)
+                    {
+                        LogHandler.Instance.Write($"WARN: Copy access denied ({i}/{attempts}) on {destinationFile} | {ex.Message}");
+                        Thread.Sleep(delayMs);
+                    }
+                }
+
+                return false;
+            }
+
             static void CloneDirectory(string root, string dest)
             {
                 LogHandler.Instance.Write($"Cloning directory {root} to {dest}");
@@ -308,53 +332,75 @@ namespace ScavKRInstaller
 
                 foreach(var file in Directory.GetFiles(root))
                 {
-                    File.Copy(file, Path.Combine(dest, Path.GetFileName(file)), true);
+                    string destinationFile = Path.Combine(dest, Path.GetFileName(file));
+                    if (!CopyFileWithRetry(file, destinationFile))
+                    {
+                        throw new IOException($"Failed to copy after retries: {destinationFile}");
+                    }
                 }
             }
             int copiedFolders = 0;
             foreach(string path in paths)
             {
-                string targetFolder = path.Substring(path.LastIndexOf(Path.DirectorySeparatorChar)+1);
-                if(FileOperations.GameZipFilename.Contains(targetFolder))
+                try
                 {
-                    CloneDirectory(path, Installer.GameFolderPath);
-                    copiedFolders++;
-                    foreach (string dir in Constants.GetGameNames())
+                    string targetFolder = path.Substring(path.LastIndexOf(Path.DirectorySeparatorChar)+1);
+                    if(FileOperations.GameZipFilename.Contains(targetFolder))
                     {
-                        string result = Installer.GameFolderPath+Path.DirectorySeparatorChar+dir;
-                        if(Directory.Exists(result))
+                        string sourceGameRoot = path;
+                        string[] foundExecutablesInArchive = Directory.GetFiles(path, Constants.GameName, SearchOption.AllDirectories);
+                        if(foundExecutablesInArchive.Length > 0)
                         {
-                            Installer.GameFolderPath=result;
-                            break;
+                            sourceGameRoot = Path.GetDirectoryName(foundExecutablesInArchive[0]);
                         }
+                        else
+                        {
+                            foreach (string dir in Constants.GetGameNames())
+                            {
+                                string[] candidates = Directory.GetDirectories(path, dir, SearchOption.AllDirectories);
+                                if(candidates.Length > 0)
+                                {
+                                    sourceGameRoot = candidates[0];
+                                    break;
+                                }
+                            }
+                        }
+
+                        CloneDirectory(sourceGameRoot, Installer.GameFolderPath);
+                        copiedFolders++;
+                        Installer.GamePath = Installer.GameFolderPath+Path.DirectorySeparatorChar+Constants.GameName;
+                        continue;
                     }
-                    Installer.GamePath = Installer.GameFolderPath+Path.DirectorySeparatorChar+Constants.GameName;
-                    continue;
+                    if(Installer.BepinZipArchivePath.Contains(targetFolder))
+                    {
+                        CloneDirectory(path, Installer.GameFolderPath);
+                        copiedFolders++;
+                        continue;
+                    }
+                    if(Installer.ModZipArchivePath.Contains(targetFolder))
+                    {
+                        string[] dirs = Directory.GetDirectories(path);
+                        string finalModPath = dirs[0];
+                        CloneDirectory(finalModPath, Installer.GameFolderPath);
+                        copiedFolders++;
+                        continue;
+                    }
+                    if(Installer.ChangeSkinArchivePath.Contains(targetFolder))
+                    {
+                        CloneDirectory(path, Installer.GameFolderPath+Path.DirectorySeparatorChar+"BepInEx"+Path.DirectorySeparatorChar+"plugins");
+                        copiedFolders++;
+                        continue;
+                    }
                 }
-                if(Installer.BepinZipArchivePath.Contains(targetFolder))
+                catch(Exception ex)
                 {
-                    CloneDirectory(path, Installer.GameFolderPath);
-                    copiedFolders++;
-                    continue;
-                }
-                if(Installer.ModZipArchivePath.Contains(targetFolder))
-                {
-                    string[] dirs = Directory.GetDirectories(path);
-                    string finalModPath = dirs[0];
-                    CloneDirectory(finalModPath, Installer.GameFolderPath);
-                    copiedFolders++;
-                    continue;
-                }
-                if(Installer.ChangeSkinArchivePath.Contains(targetFolder))
-                {
-                    CloneDirectory(path, Installer.GameFolderPath+Path.DirectorySeparatorChar+"BepInEx"+Path.DirectorySeparatorChar+"plugins");
-                    copiedFolders++;
-                    continue;
+                    LogHandler.Instance.Write($"!!EXCEPTION WHILE COPYING FILES!! | {ex}");
+                    return false;
                 }
             }
             if (copiedFolders != paths.Length)
             {
-                MessageBox.Show("Files were only copied partially! This is very bad, and should never happen. If that's the case, you would want to do a complete reinstallation of the game. If the error persists on a fresh install, consider manual installation.", "Critical Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                if(!Installer.HeadlessMode) MessageBox.Show("Files were only copied partially! This is very bad, and should never happen. If that's the case, you would want to do a complete reinstallation of the game. If the error persists on a fresh install, consider manual installation.", "Critical Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 LogHandler.Instance.Write($"!!!PARTIAL COPY ERROR CAUGHT!!!");
                 return false;
             }
