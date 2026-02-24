@@ -19,13 +19,22 @@ namespace ScavKRInstaller
         public static SetupVersions Instance { get; private set; }
         public async static Task Init(string source)
         {
-            Instance=await ParseVersion(source);
+            try
+            {
+                LogHandler.Instance.Write($"BEGIN FETCH: Trying to initialize setup versions from a remote source");
+                Instance=await ParseVersion(source);
+                LogHandler.Instance.Write($"END FETCH: Initialized successfully, versions: {String.Join(", ", VersionManager.Instance.Versions.Keys)}");
+            }
+            catch(Exception ex)
+            {
+                LogHandler.Instance.Write("$Failed to initialize a sourcelist!");
+                throw new Exception("Sourcelist bust!");
+            }
         }
         public async static Task<SetupVersions> ParseVersion(string source)
         {
             if(source != null)
             {
-                LogHandler.Instance.Write($"Trying to initialize setup version from source: {source}");
                 bool IsURL = Uri.IsWellFormedUriString(source, UriKind.RelativeOrAbsolute);
                 if(IsURL)
                 {
@@ -58,6 +67,7 @@ namespace ScavKRInstaller
             }
         localFallback:
             {
+                LogHandler.Instance.Write($"Trying to load sources locally!");
                 if(Constants.FallbackVersionFilePath != null)
                 {
                     return LoadLocal(Constants.FallbackVersionFilePath);
@@ -68,14 +78,15 @@ namespace ScavKRInstaller
         }
         public async static Task<SetupVersions> Fetch(string source)
         {
-            LogHandler.Instance.Write($"Trying to download sources file from: {source}");
+            LogHandler.Instance.Write($"Trying to fetch sources file from: {source}");
             using HttpClient client = new();
+            client.Timeout = new TimeSpan(0, 0, 10);
             Uri uri = new(source);
             try
             {
                 HttpResponseMessage response = await client.GetAsync(uri);
                 response.EnsureSuccessStatusCode();
-                return Deserialize(source);
+                return Deserialize(await response.Content.ReadAsStringAsync());
             }
             catch(TaskCanceledException ex) when(ex.InnerException is TimeoutException)
             {

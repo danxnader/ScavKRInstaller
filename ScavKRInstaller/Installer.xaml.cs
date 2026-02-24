@@ -20,18 +20,12 @@ public partial class Installer : Window
     public static string ChangeSkinArchivePath = "";
     private string providedPath = "";
     public static bool InDownloadMode = true;
+    private static bool Ready = false;
     private Log logWindow = null;
 
     public Installer()
     {
         InitializeComponent();
-        FileOperations.DiscoverFilenames();
-        string[] saveFilePaths;
-        if(FileOperations.CheckIfSaveFilesPresent(out saveFilePaths))
-        {
-            Installer.SaveFilePaths=saveFilePaths;
-        }
-        FileOperations.DeleteTempFiles();
         Window.GetWindow(this).Title = $"Scav Krokosha Multiplayer Installer rev. {Constants.Version}: {Constants.GetSplash()[Random.Shared.Next(0, Constants.GetSplash().Length)]}";
     }
 
@@ -83,21 +77,21 @@ public partial class Installer : Window
     }
     private async void ButtonInstall_Click(object sender, RoutedEventArgs e)
     {
+        if (!Installer.Ready)
+        {
+            LogHandler.Instance.Write("wtf how did you do that, don't do that, installer is not ready");
+            return;
+        }
         LogHandler.Instance.Write($"BEGIN: Initiating installation");
-        this.CheckBoxDownloadGame.IsEnabled=false;
-        this.CheckBoxSavefileDelete.IsEnabled=false;
-        this.CheckBoxChangeSkinInstall.IsEnabled=false;
-        this.ButtonInstall.IsEnabled=false;
-        this.ButtonBrowsePath.IsEnabled=false;
-        this.TextBoxGamePath.IsEnabled=false;
-        List<string> finalUnzipPaths=new();
+        this.DisableInputs();
+        List<string> finalUnzipPaths = new();
         try
         {
             FileOperations.HandleProvidedGamePath(ref this.providedPath);
         }
         catch(Exception ex)
         {
-            if (ex.Message=="Non-latin characters in the gamepath!") MessageBox.Show("Provided path contains non-latin characters! For the mod to function properly, path should be english-only.", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+            if(ex.Message=="Non-latin characters in the gamepath!") MessageBox.Show("Provided path contains non-latin characters! For the mod to function properly, path should be english-only.", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
             else MessageBox.Show("Provided path is invalid!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
             LogHandler.Instance.Write($"CANCEL: invalid path");
             goto CancelInstallation;
@@ -107,7 +101,7 @@ public partial class Installer : Window
             try
             {
                 this.SetStatus("Downloading the game, please wait!");
-                finalUnzipPaths.Add(await FileOperations.TryGameDownload(Constants.GameDownloadURLs));
+                finalUnzipPaths.Add(await FileOperations.TryGameDownload(VersionManager.Instance.Versions["Latest"].Game.ToArray()));
             }
             catch(TimeoutException ex)
             {
@@ -126,19 +120,20 @@ public partial class Installer : Window
             }
             LogHandler.Instance.Write($"Agreed to update");
         }
-        if(this.CheckBoxChangeSkinInstall.IsChecked.Value)
-        {
-            try
-            {
-                this.SetStatus("Downloading ChangeSkin...");
-                Installer.ChangeSkinArchivePath=await FileOperations.DownloadArchive(Constants.ChangeSkinURL);
-            }
-            catch(Exception ex)
-            {
-                MessageBox.Show($"Error while downloading ChangeSkin mod!\nContact the developer if the issue persists!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
-                LogHandler.Instance.Write($"SKIP: Bepin fail: {ex.ToString()}");
-            }
-        }
+        //changeskin out until we get a consistent mod file structure
+        //if(this.CheckBoxChangeSkinInstall.IsChecked.Value)
+        //{
+        //    try
+        //    {
+        //        this.SetStatus("Downloading ChangeSkin...");
+        //        Installer.ChangeSkinArchivePath=await FileOperations.DownloadArchive(VersionManager.Instance.Versions["Latest"].Ch.ToArray()));
+        //    }
+        //    catch(Exception ex)
+        //    {
+        //        MessageBox.Show($"Error while downloading ChangeSkin mod!\nContact the developer if the issue persists!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+        //        LogHandler.Instance.Write($"SKIP: Bepin fail: {ex.ToString()}");
+        //    }
+        //}
         if((bool)this.CheckBoxSavefileDelete.IsChecked)
         {
             FileOperations.DeleteSavefiles(Installer.SaveFilePaths);
@@ -148,7 +143,7 @@ public partial class Installer : Window
             this.SetStatus("Downloading BepinEX...");
             try
             {
-                Installer.BepinArchivePath=await FileOperations.DownloadArchive(Constants.BepinZipURL);
+                Installer.BepinArchivePath=await FileOperations.DownloadArchive(VersionManager.Instance.Versions["Latest"].Bepin.ToArray()[0]);
             }
             catch(Exception ex)
             {
@@ -160,7 +155,7 @@ public partial class Installer : Window
         this.SetStatus("Downloading multiplayer mod...");
         try
         {
-            Installer.ModArchivePath=await FileOperations.DownloadArchive(Constants.ModZipURL);
+            Installer.ModArchivePath=await FileOperations.DownloadArchive(VersionManager.Instance.Versions["Latest"].MultiplayerMod.ToArray()[0]);
         }
         catch(Exception ex)
         {
@@ -206,17 +201,33 @@ public partial class Installer : Window
         }
     CancelInstallation:
         {
-            this.CheckBoxDownloadGame.IsEnabled=true;
-            this.CheckBoxSavefileDelete.IsEnabled=true;
-            this.ButtonInstall.IsEnabled=true;
-            this.ButtonBrowsePath.IsEnabled=true;
-            this.TextBoxGamePath.IsEnabled=true;
-            this.ButtonInstall.Content="Install";
+            this.EnableInputs();
             ClearStatics();
             FileOperations.DeleteTempFiles();
             return;
         }
     }
+
+    private void EnableInputs()
+    {
+        this.CheckBoxDownloadGame.IsEnabled=true;
+        this.CheckBoxSavefileDelete.IsEnabled=true;
+        this.ButtonInstall.IsEnabled=true;
+        this.ButtonBrowsePath.IsEnabled=true;
+        this.TextBoxGamePath.IsEnabled=true;
+        this.ButtonInstall.Content="Install";
+    }
+
+    private void DisableInputs()
+    {
+        this.CheckBoxDownloadGame.IsEnabled=false;
+        this.CheckBoxSavefileDelete.IsEnabled=false;
+        this.CheckBoxChangeSkinInstall.IsEnabled=false;
+        this.ButtonInstall.IsEnabled=false;
+        this.ButtonBrowsePath.IsEnabled=false;
+        this.TextBoxGamePath.IsEnabled=false;
+    }
+
     public static void ClearStatics()
     {
         Installer.GameFolderPath="";
@@ -253,8 +264,6 @@ public partial class Installer : Window
 
     private async void ButtonOpenLog_Click(object sender, RoutedEventArgs e)
     {
-        await VersionManager.Init(null);
-        LogHandler.Instance.Write(VersionManager.Instance.Versions["Latest"].Extras["ChangeSkin"].URLs[0]);
         if(this.logWindow==null)
         {
             this.logWindow=new Log(LogHandler.Instance);
@@ -272,5 +281,32 @@ public partial class Installer : Window
                 logWindow.Show();
             }
         }
+    }
+
+    private async void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        this.DisableInputs();
+        this.SetStatus("Fetching sources...");
+        try
+        {
+            await VersionManager.Init(Constants.SourcelistURL);
+            Installer.Ready=true;
+        }
+        catch
+        {
+            MessageBox.Show("Unable to fetch sources, and no local source file was found!\n\nThe installer cannot proceed further, and this is very, very bad, meaning that github is not accessible and you will not be able to download the mods from there.\nIf you believe that this is a bug or if you want to use a separate filehost list, consider:\n\n1. Disabling your VPN/proxy/geoblock bypass software since it sometimes interferes with http requests which are used to fetch the list.\n\n2. Acquiring sources.json from the github page manually, there is a link to the secret gist in the readme. Then place the file into the same directory as the installer and relaunch.\n\nTHIS IS NOT GUARANTEED TO WORK!\n\nIF YOU BELIEVE THAT THIS IS A BUG, REPORT IT!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+            this.SetStatus("SOURCE ERROR!");
+            return;
+        }
+        this.SetStatus("Initial setup...");
+        FileOperations.DiscoverFilenames();
+        string[] saveFilePaths;
+        if(FileOperations.CheckIfSaveFilesPresent(out saveFilePaths))
+        {
+            Installer.SaveFilePaths=saveFilePaths;
+        }
+        FileOperations.DeleteTempFiles();
+        this.EnableInputs();
+        return;
     }
 }

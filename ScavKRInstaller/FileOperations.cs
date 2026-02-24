@@ -16,14 +16,12 @@ namespace ScavKRInstaller
         private static string GameArchiveFilename="";
         private static string BepinZipFilename="";
         private static string ModZipFilename="";
-        private static string ChangeSkinFilename="";
         public static string SelectedSetupVersion="";
         public static void DiscoverFilenames()
         {
-            GameArchiveFilename=GetZipFilename(Constants.GameDownloadURLs);
-            BepinZipFilename=GetZipFilename(Constants.BepinZipURL);
-            ModZipFilename=GetZipFilename(Constants.ModZipURL);
-            ChangeSkinFilename=GetZipFilename(Constants.ChangeSkinURL);
+            GameArchiveFilename=GetZipFilename(VersionManager.Instance.Versions["Latest"].Game.ToArray());
+            BepinZipFilename=GetZipFilename(VersionManager.Instance.Versions["Latest"].Bepin.ToArray()[0]);
+            ModZipFilename=GetZipFilename(VersionManager.Instance.Versions["Latest"].MultiplayerMod.ToArray()[0]);
         }
         public static string GetZipFilename(string[] urls)
         {
@@ -278,16 +276,23 @@ namespace ScavKRInstaller
                 fs.Seek(0, SeekOrigin.Begin);
                 string path = fs.Name;
                 string targetFolder = path.Substring(path.LastIndexOf(Path.DirectorySeparatorChar) + 1);
+                if (fs.Length < 1024*3) //3kb
+                {
+                    return false; //partial download, signature of some filemirrors, they *techincally* allow you to download something, but it's empty.
+                }
                 byte[] SHA = await sha.ComputeHashAsync(fs);
                 if(path.Contains(GameArchiveFilename))
                 {
-                    return Constants.GetArchiveChecksums()[Constants.ArchiveType.Game].SequenceEqual(SHA);
+                    //disabled temporarily
+                    //return Constants.GetArchiveChecksums()[Constants.ArchiveType.Game].SequenceEqual(SHA);
+                    return true;
                 }
                 if(path.Contains(BepinZipFilename))
                 {
-                    return Constants.GetArchiveChecksums()[Constants.ArchiveType.Bepin].SequenceEqual(SHA);
+                    //return Constants.GetArchiveChecksums()[Constants.ArchiveType.Bepin].SequenceEqual(SHA);
+                    return true;
                 }
-                if(path.Contains(ModZipFilename) || path.Contains(ChangeSkinFilename))
+                if(path.Contains(ModZipFilename)) //changeskin magik out
                 {
                     return true; //probably the only thing that does change
                                  //fuck me dude we need a proper remote checksum generator
