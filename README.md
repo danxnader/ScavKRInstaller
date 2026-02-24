@@ -2,6 +2,8 @@
 
 Simple windows installer of a [Co-op multiplayer mod](https://github.com/Krokosha666/cas-unk-krokosha-multiplayer-coop) for [Scav Prototype](https://orsonik.itch.io/scav-prototype).
 
+[Source list gist.](https://gist.github.com/danxnader/3a655ba7b868999b65b71856a765499a).
+
 Downloads and unpacks BepInEx and the latest version of the mod into the game's folder.
 
 Optionally downloads and installs the correct game version, as well as [ChangeSkin](https://github.com/05126619z/ChangeSkin) mod.
