@@ -81,6 +81,7 @@ namespace ScavKRInstaller
                 "Thanks losyrr!",
                 "Thanks GaryTheCat!",
                 "Thanks Arcarnisan!",
+                "Thanks khy166",
                 "Go play Desecrators",
                 "Go play CleanFall",
                 "3 turbulence crystals",
