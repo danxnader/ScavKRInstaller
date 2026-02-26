@@ -13,16 +13,15 @@ namespace ScavKRInstaller
 {
     public static class FileOperations
     {
-        private static string GameZipFilename="";
+        private static string GameArchiveFilename="";
         private static string BepinZipFilename="";
         private static string ModZipFilename="";
-        private static string ChangeSkinFilename="";
+        public static string SelectedSetupVersion="";
         public static void DiscoverFilenames()
         {
-            GameZipFilename=GetZipFilename(Constants.GameDownloadURLs);
-            BepinZipFilename=GetZipFilename(Constants.BepinZipURL);
-            ModZipFilename=GetZipFilename(Constants.ModZipURL);
-            ChangeSkinFilename=GetZipFilename(Constants.ChangeSkinURL);
+            GameArchiveFilename=GetZipFilename(VersionManager.Instance.Versions["Latest"].Game.ToArray());
+            BepinZipFilename=GetZipFilename(VersionManager.Instance.Versions["Latest"].Bepin.ToArray()[0]);
+            ModZipFilename=GetZipFilename(VersionManager.Instance.Versions["Latest"].MultiplayerMod.ToArray()[0]);
         }
         public static string GetZipFilename(string[] urls)
         {
@@ -277,16 +276,23 @@ namespace ScavKRInstaller
                 fs.Seek(0, SeekOrigin.Begin);
                 string path = fs.Name;
                 string targetFolder = path.Substring(path.LastIndexOf(Path.DirectorySeparatorChar) + 1);
-                byte[] SHA = await sha.ComputeHashAsync(fs);
-                if(path.Contains(GameZipFilename))
+                if (fs.Length < 1024*3) //3kb
                 {
-                    return Constants.GetArchiveChecksums()[Constants.ArchiveType.Game].SequenceEqual(SHA);
+                    return false; //partial download, signature of some filemirrors, they *techincally* allow you to download something, but it's empty.
+                }
+                byte[] SHA = await sha.ComputeHashAsync(fs);
+                if(path.Contains(GameArchiveFilename))
+                {
+                    //disabled temporarily
+                    //return Constants.GetArchiveChecksums()[Constants.ArchiveType.Game].SequenceEqual(SHA);
+                    return true;
                 }
                 if(path.Contains(BepinZipFilename))
                 {
-                    return Constants.GetArchiveChecksums()[Constants.ArchiveType.Bepin].SequenceEqual(SHA);
+                    //return Constants.GetArchiveChecksums()[Constants.ArchiveType.Bepin].SequenceEqual(SHA);
+                    return true;
                 }
-                if(path.Contains(ModZipFilename) || path.Contains(ChangeSkinFilename))
+                if(path.Contains(ModZipFilename)) //changeskin magik out
                 {
                     return true; //probably the only thing that does change
                                  //fuck me dude we need a proper remote checksum generator
@@ -315,7 +321,7 @@ namespace ScavKRInstaller
             foreach(string path in paths)
             {
                 string targetFolder = path.Substring(path.LastIndexOf(Path.DirectorySeparatorChar)+1);
-                if(FileOperations.GameZipFilename.Contains(targetFolder))
+                if(FileOperations.GameArchiveFilename.Contains(targetFolder))
                 {
                     CloneDirectory(path, Installer.GameFolderPath);
                     copiedFolders++;
@@ -331,13 +337,13 @@ namespace ScavKRInstaller
                     Installer.GamePath = Installer.GameFolderPath+Path.DirectorySeparatorChar+Constants.GameName;
                     continue;
                 }
-                if(Installer.BepinZipArchivePath.Contains(targetFolder))
+                if(Installer.BepinArchivePath.Contains(targetFolder))
                 {
                     CloneDirectory(path, Installer.GameFolderPath);
                     copiedFolders++;
                     continue;
                 }
-                if(Installer.ModZipArchivePath.Contains(targetFolder))
+                if(Installer.ModArchivePath.Contains(targetFolder))
                 {
                     string[] dirs = Directory.GetDirectories(path);
                     string finalModPath = dirs[0];

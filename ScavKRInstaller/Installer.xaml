@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ScavKRInstaller"
         mc:Ignorable="d"
-        Title="Scav Krokosha Multiplayer Installer" Height="197" Width="510" ResizeMode="NoResize" Closing="Window_Closing">
+        Title="Scav Krokosha Multiplayer Installer" Height="197" Width="510" ResizeMode="NoResize" Closing="Window_Closing" Loaded="Window_Loaded">
     <Window.Resources>
         <Style x:Key="MainTextBlock" TargetType="{x:Type TextBlock}">
             <Setter Property="FontFamily" Value="Calibri"/>
@@ -38,7 +38,7 @@
             <RowDefinition Height="32"></RowDefinition>
             <RowDefinition Height="32"></RowDefinition>
         </Grid.RowDefinitions>
-        <TextBlock Style="{StaticResource MainTextBlock}" Grid.Row="0" Margin="19,3,-19,0" VerticalAlignment="Top" Grid.ColumnSpan="2">Download Demo 5 Pre-test 4?</TextBlock>
+        <TextBlock Style="{StaticResource MainTextBlock}" Grid.Row="0" Margin="19,3,-19,0" VerticalAlignment="Top" Grid.ColumnSpan="2">Download the latest compatible version?</TextBlock>
         <CheckBox x:Name="CheckBoxDownloadGame" Grid.Row="0" VerticalAlignment="Top" Margin="5,9,0,0" IsChecked="True" HorizontalAlignment="Left" Width="18" Height="18" Checked="CheckBoxDownloadGame_Checked" Click="CheckBoxDownloadGame_Click"/>
         <Button x:Name="ButtonOpenLog" Style="{StaticResource MainButton}" Width="70" HorizontalContentAlignment="Center" Height="30" Margin="326,0,0,0" HorizontalAlignment="Left" Content="Log" Click="ButtonOpenLog_Click" Grid.Column="1"/>
         <TextBlock x:Name="TextBlockInstallPath" Style="{StaticResource MainTextBlock}" Grid.Row="1" Grid.ColumnSpan="2">Install path:</TextBlock>
@@ -46,8 +46,8 @@
         <Button x:Name="ButtonBrowsePath" Style="{StaticResource MainButton}" Grid.Row="1" Width="70" HorizontalContentAlignment="Left" Height="30" Margin="326,0,0,0" HorizontalAlignment="Left" Click="ButtonBrowsePath_Click" Grid.Column="1">Browse</Button>
         <TextBlock Style="{StaticResource MainTextBlock}" Grid.Row="2" Margin="19,0,-19,0" Grid.ColumnSpan="2">Delete savefile? (recommended)</TextBlock>
         <CheckBox x:Name="CheckBoxSavefileDelete"  Grid.Row="2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" HorizontalAlignment="Left" Width="18" Height="18"></CheckBox>
-        <TextBlock Style="{StaticResource MainTextBlock}" Grid.Row="2" Margin="19,29,-19,0" Grid.ColumnSpan="2" Grid.RowSpan="2" VerticalAlignment="Top">Install <Hyperlink RequestNavigate="Hyperlink_RequestNavigate"  NavigateUri="https://github.com/05126619z/ChangeSkin">ChangeSkin</Hyperlink> mod?</TextBlock>
-        <CheckBox x:Name="CheckBoxChangeSkinInstall" Grid.Row="3" VerticalAlignment="Top" Margin="5,3,0,0" IsChecked="False" HorizontalAlignment="Left" Width="18" Height="18"></CheckBox>
+        <TextBlock Visibility="Hidden" Style="{StaticResource MainTextBlock}" Grid.Row="2" Margin="19,29,-19,0" Grid.ColumnSpan="2" Grid.RowSpan="2" VerticalAlignment="Top">Install <Hyperlink RequestNavigate="Hyperlink_RequestNavigate"  NavigateUri="https://github.com/05126619z/ChangeSkin">ChangeSkin</Hyperlink> mod?</TextBlock>
+        <CheckBox Visibility="Hidden" x:Name="CheckBoxChangeSkinInstall" Grid.Row="3" VerticalAlignment="Top" Margin="5,3,0,0" IsChecked="False" HorizontalAlignment="Left" Width="18" Height="18"></CheckBox>
         <Button x:Name="ButtonInstall" Style="{StaticResource MainButton}" Grid.Row="3" Margin="5,26,5,0" IsEnabled="True" Click="ButtonInstall_Click" Grid.RowSpan="2" VerticalAlignment="Top" Grid.ColumnSpan="2">Install</Button>
     </Grid>
 </Window>
