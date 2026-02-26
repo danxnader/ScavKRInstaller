@@ -38,7 +38,7 @@
             <RowDefinition Height="32"></RowDefinition>
             <RowDefinition Height="32"></RowDefinition>
         </Grid.RowDefinitions>
-        <TextBlock Style="{StaticResource MainTextBlock}" Grid.Row="0" Margin="19,3,-19,0" VerticalAlignment="Top" Grid.ColumnSpan="2">Download the latest compatible version?</TextBlock>
+        <TextBlock Style="{StaticResource MainTextBlock}" Grid.Row="0" Margin="19,3,-19,0" VerticalAlignment="Top" Grid.ColumnSpan="2">Download the latest compatible game version?</TextBlock>
         <CheckBox x:Name="CheckBoxDownloadGame" Grid.Row="0" VerticalAlignment="Top" Margin="5,9,0,0" IsChecked="True" HorizontalAlignment="Left" Width="18" Height="18" Checked="CheckBoxDownloadGame_Checked" Click="CheckBoxDownloadGame_Click"/>
         <Button x:Name="ButtonOpenLog" Style="{StaticResource MainButton}" Width="70" HorizontalContentAlignment="Center" Height="30" Margin="326,0,0,0" HorizontalAlignment="Left" Content="Log" Click="ButtonOpenLog_Click" Grid.Column="1"/>
         <TextBlock x:Name="TextBlockInstallPath" Style="{StaticResource MainTextBlock}" Grid.Row="1" Grid.ColumnSpan="2">Install path:</TextBlock>
