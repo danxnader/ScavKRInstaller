@@ -16,12 +16,12 @@ namespace ScavKRInstaller
         private static string GameArchiveFilename="";
         private static string BepinZipFilename="";
         private static string ModZipFilename="";
-        public static string SelectedSetupVersion="";
+        public static string SelectedSetupVersion="Latest";
         public static void DiscoverFilenames()
         {
-            GameArchiveFilename=GetZipFilename(VersionManager.Instance.Versions["Latest"].Game.ToArray());
-            BepinZipFilename=GetZipFilename(VersionManager.Instance.Versions["Latest"].Bepin.ToArray()[0]);
-            ModZipFilename=GetZipFilename(VersionManager.Instance.Versions["Latest"].MultiplayerMod.ToArray()[0]);
+            GameArchiveFilename=GetZipFilename(VersionManager.Instance.Versions[SelectedSetupVersion].Game.ToArray());
+            BepinZipFilename=GetZipFilename(VersionManager.Instance.Versions[SelectedSetupVersion].Bepin.ToArray()[0]);
+            ModZipFilename=GetZipFilename(VersionManager.Instance.Versions[SelectedSetupVersion].MultiplayerMod.ToArray()[0]);
         }
         public static string GetZipFilename(string[] urls)
         {
@@ -215,16 +215,23 @@ namespace ScavKRInstaller
                 using(FileStream fs = new FileStream(tempFolderFilePath, FileMode.Create)) //TODO: fs.Name this retard to statics, get file paths HERE
                 {
                     await response.Content.CopyToAsync(fs);
-                    if(!await FileOperations.IsChecksumValid(fs))
+                    if(!await FileOperations.DoPostDownloadChecks(fs))
                     {
                         InvalidDataException ex = new InvalidDataException($"Checksum check failed on {fs.Name}! File has been deleted!");
                         ex.Data.Add("path", fs.Name);
                         LogHandler.Instance.Write($"!!CHECKSUM CHECK ON {filename} FAILED!!");
                         throw ex;
                     };
-                    LogHandler.Instance.Write($"Downloaded {filename} successfully!");
-                    return tempFolderFilePath;
                 }
+                if(!ValidateArchive(tempFolderFilePath)) //outside of FileStream because ZipFile runs on a separate thread and if i were to do it in using it fail to open the archive as it's readlocked
+                {
+                    InvalidDataException ex = new InvalidDataException($"!!ARCHIVE IS CORRUPTED {tempFolderFilePath}!!");
+                    ex.Data.Add("path", tempFolderFilePath);
+                    LogHandler.Instance.Write($"!!POST DOWNLOAD ARCHIVE CHECK ON {filename} FAILED!!");
+                    throw ex;
+                }
+                LogHandler.Instance.Write($"Downloaded {filename} successfully!");
+                return tempFolderFilePath;
             }
             catch(InvalidDataException ex)
             {
@@ -269,18 +276,20 @@ namespace ScavKRInstaller
             unzippedPaths = paths.ToArray();
             return result;
         }
-        public async static Task<bool> IsChecksumValid(FileStream fs)
+        public async static Task<bool> DoPostDownloadChecks(FileStream fs)
         {
             using(SHA256 sha = SHA256.Create())
             {
                 fs.Seek(0, SeekOrigin.Begin);
                 string path = fs.Name;
                 string targetFolder = path.Substring(path.LastIndexOf(Path.DirectorySeparatorChar) + 1);
-                if (fs.Length < 1024*3) //3kb
+                const int bMargin = 1024*256; //256kb
+                if(fs.Length < bMargin)
                 {
+                    LogHandler.Instance.Write($"!!FAIL!! {fs.Name} is just {fs.Length/1024}kb, less than {bMargin/1024}kb margin!");
                     return false; //partial download, signature of some filemirrors, they *techincally* allow you to download something, but it's empty.
                 }
-                byte[] SHA = await sha.ComputeHashAsync(fs);
+                //byte[] SHA = await sha.ComputeHashAsync(fs); work on checksums l8r
                 if(path.Contains(GameArchiveFilename))
                 {
                     //disabled temporarily
@@ -300,6 +309,21 @@ namespace ScavKRInstaller
                 return false;
             }
         }
+
+        public static bool ValidateArchive(string path)  
+        {
+            try
+            {
+                using(ZipFile.OpenRead(path));
+            }
+            catch(Exception ex)
+            {
+                LogHandler.Instance.Write($"!!FAIL!! {path} is a corrupted archive!");
+                return false;
+            }
+            return true;
+        }
+
         public static bool HandleCopyingFiles(string[] paths) //well, since the multiplayer mod is inside of it's own folder, i can't just generically move everything into game's directory, so they all get a special treatment.
         {
             static void CloneDirectory(string root, string dest)
