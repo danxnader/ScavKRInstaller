@@ -64,7 +64,7 @@ namespace ScavKRInstaller
         }
         public override string ToString()
         {
-            return $"Δt:[{delta.ToString(@"mm\:ss\.fff")}]|t:[{time.ToString(@"HH\:mm\:ss\.fff")}] {message}";
+            return $"dt:[{delta.ToString(@"mm\:ss\.fff")}]|t:[{time.ToString(@"HH\:mm\:ss\.fff")}] {message}";
         }
     }
     public static class LogHandler
