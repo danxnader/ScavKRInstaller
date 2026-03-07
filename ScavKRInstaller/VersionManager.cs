@@ -27,7 +27,7 @@ namespace ScavKRInstaller
             }
             catch(Exception ex)
             {
-                LogHandler.Instance.Write("$Failed to initialize a sourcelist!");
+                LogHandler.Instance.Write("Failed to initialize the sourcelist!");
                 throw new Exception("Sourcelist bust!");
             }
         }
