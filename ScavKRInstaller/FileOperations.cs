@@ -384,7 +384,7 @@ namespace ScavKRInstaller
             }
             if (copiedFolders != paths.Length)
             {
-                MessageBox.Show("Files were only copied partially! This is very bad, and should never happen. If that's the case, you would want to do a complete reinstallation of the game. If the error persists on a fresh install, consider manual installation.", "Critical Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Files were only copied partially! This is very bad and should never happen. If that's the case, you would want to do a complete reinstallation of the game. If the error persists on a fresh install, consider manual installation.", "Critical Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 LogHandler.Instance.Write($"!!!PARTIAL COPY ERROR CAUGHT!!!");
                 return false;
             }

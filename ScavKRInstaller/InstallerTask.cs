@@ -34,6 +34,12 @@ namespace ScavKRInstaller
                 }
                 return;
             }
+            PreliminarySetup(installerWindow);
+            return;
+        }
+
+        public static void PreliminarySetup(Installer installerWindow = null)
+        {
             installerWindow?.SetStatus("Initial setup...");
             FileOperations.DiscoverFilenames();
             string[] saveFilePaths;
@@ -43,8 +49,8 @@ namespace ScavKRInstaller
             }
             FileOperations.DeleteTempFiles();
             installerWindow?.EnableInputs();
-            return;
         }
+
         public static async Task Install(string[] path, Installer installerWindow = null)
         {
             LogHandler.Instance.Write($"BEGIN: Initiating installation");

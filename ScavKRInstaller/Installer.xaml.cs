@@ -137,10 +137,6 @@ public partial class Installer : Window
         this.TextBlockInstallPath.Text="Game path:";
     }
 
-    private void CheckBoxDownloadGame_Checked(object sender, RoutedEventArgs e)
-    {
-        Installer.InDownloadMode = CheckBoxDownloadGame.IsChecked.Value;
-    }
 
     private async void ButtonOpenLog_Click(object sender, RoutedEventArgs e)
     {
@@ -166,10 +162,24 @@ public partial class Installer : Window
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         await InstallerTask.Fetch(this);
+        InstallerTask.PreliminarySetup(this);
     }
 
+    private void CheckBoxDownloadGame_Checked(object sender, RoutedEventArgs e)
+    {
+        Installer.InDownloadMode=true;
+    }
     private void CheckBoxSavefileDelete_Checked(object sender, RoutedEventArgs e)
     {
-        Installer.DeleteSavefile=(bool)this.CheckBoxSavefileDelete.IsChecked;
+        Installer.DeleteSavefile=true;
+    }
+    private void CheckBoxDownloadGame_Unchecked(object sender, RoutedEventArgs e)
+    {
+        Installer.InDownloadMode=false;
+    }
+
+    private void CheckBoxSavefileDelete_Unchecked(object sender, RoutedEventArgs e)
+    {
+        Installer.DeleteSavefile=false;
     }
 }

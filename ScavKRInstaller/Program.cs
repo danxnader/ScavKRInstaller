@@ -86,6 +86,7 @@ Argument list:
                     {
                         LogHandler.Instance.Write($"Something magical has happened while fetching:\n{ex.ToString()}");
                     }
+                    InstallerTask.PreliminarySetup();
                     InstallerTask.Install([path]).GetAwaiter().GetResult();
                 }
                 else
