@@ -1,4 +1,11 @@
-[![download](https://github.com/user-attachments/assets/40192b75-6b40-4cf1-b14f-e7f4cf1ddeb4)](https://github.com/danxnader/ScavKRInstaller/releases/latest/download/ScavKRInstaller.exe)
+# ARCHIVED
+# USE MANUAL INSTALL
+## .
+## .
+## .
+## .
+## .
+## .
 
 Simple windows installer of a [Co-op multiplayer mod](https://github.com/Krokosha666/cas-unk-krokosha-multiplayer-coop) for [Scav Prototype](https://orsonik.itch.io/scav-prototype).
 
